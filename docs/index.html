@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Idea inbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f3eee4;
+    --ink: #1a1612;
+    --mute: #6a6156;
+    --rule: #d9d0c2;
+    --x: #c45c26;
+    --li: #1f4e5f;
+    --hold: #6b6358;
+    --ok: #2f6b4f;
+    --queued: #b8860b;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--paper); color: var(--ink); font-family: "IBM Plex Sans", system-ui, sans-serif; }
+  body {
+    min-height: 100vh;
+    background-image:
+      linear-gradient(90deg, transparent 47px, #8f2d2d22 47px, #8f2d2d22 48px, transparent 48px),
+      repeating-linear-gradient(transparent, transparent 31px, #d9d0c255 31px, #d9d0c255 32px);
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 36px 28px 80px 64px; }
+  @media (max-width: 860px) { .wrap { padding-left: 28px; } .layout { grid-template-columns: 1fr !important; } }
+  h1 { font-family: Newsreader, Georgia, serif; font-size: 42px; font-weight: 600; letter-spacing: -0.03em; margin: 0; line-height: 0.95; }
+  h1 span { display: block; font-size: 16px; font-style: italic; font-weight: 400; color: var(--mute); margin-top: 8px; letter-spacing: 0; }
+  header { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin-bottom: 28px; }
+  .stats { display: flex; gap: 18px; font-size: 13px; color: var(--mute); }
+  .stats b { display: block; color: var(--ink); font-size: 22px; font-family: Newsreader, serif; font-weight: 600; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 22px; }
+  input[type="search"], input[type="password"], input[type="text"], select, textarea {
+    border: 1px solid var(--rule); background: #fffdf8; padding: 10px 12px; font: inherit; color: inherit; border-radius: 2px;
+  }
+  input[type="search"] { flex: 1; min-width: 220px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .chip, button.chip {
+    border: 1px solid var(--rule); background: transparent; padding: 7px 11px; font: inherit; font-size: 13px; color: var(--mute);
+    cursor: pointer; border-radius: 999px;
+  }
+  .chip.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .btn {
+    background: var(--ink); color: var(--paper); border: 0; padding: 10px 16px; font: inherit; font-size: 14px; cursor: pointer; border-radius: 2px;
+  }
+  .layout { display: grid; grid-template-columns: 1fr 280px; gap: 28px; align-items: start; }
+  .card { background: #fffdf8cc; border: 1px solid var(--rule); padding: 22px 22px 16px; margin-bottom: 16px; position: relative; }
+  .card:before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--hold); }
+  .card.lane-x:before { background: var(--x); }
+  .card.lane-li:before { background: var(--li); }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--mute); }
+  .id { font-weight: 600; color: var(--ink); letter-spacing: 0.08em; }
+  .lane { font-weight: 600; padding: 2px 7px; border: 1px solid currentColor; }
+  .lane.x { color: var(--x); } .lane.li { color: var(--li); } .lane.hold { color: var(--hold); }
+  .gist { font-family: Newsreader, Georgia, serif; font-size: 22px; line-height: 1.28; margin: 12px 0 14px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .tag { font-size: 12px; color: var(--mute); border: 0; border-bottom: 1px dashed var(--rule); background: none; cursor: pointer; padding: 0; font-family: inherit; }
+  .uses { margin: 0; padding: 0; list-style: none; }
+  .uses li { display: grid; grid-template-columns: 92px 1fr; gap: 10px; padding: 8px 0; border-top: 1px solid var(--rule); font-size: 13px; }
+  .uses .when { color: var(--mute); font-variant-numeric: tabular-nums; }
+  .status { font-weight: 600; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .status.queued { color: var(--queued); } .status.posted { color: var(--ok); } .status.handed { color: var(--li); }
+  details.raw { margin-top: 8px; color: var(--mute); font-size: 13px; }
+  details.raw summary { cursor: pointer; }
+  details.raw p { margin: 8px 0 0; white-space: pre-wrap; color: var(--ink); line-height: 1.45; }
+  .reuse { font-size: 12px; color: var(--mute); margin-top: 10px; }
+  aside h2 { font-family: Newsreader, serif; font-size: 18px; margin: 0 0 8px; }
+  aside p.note { font-size: 13px; color: var(--mute); margin: 0 0 16px; line-height: 1.4; }
+  .cloud { display: flex; flex-wrap: wrap; gap: 8px 10px; margin-bottom: 28px; }
+  .empty { color: var(--mute); font-size: 13px; font-style: italic; }
+  .conn { font-size: 13px; padding: 8px 0; border-top: 1px solid var(--rule); }
+  .conn b { font-family: Newsreader, serif; }
+  #gate { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 24px 24px 64px; }
+  #gate .box { width: min(420px, 100%); }
+  #gate p { color: var(--mute); font-size: 14px; margin: 10px 0 22px; }
+  #gate form { display: flex; gap: 8px; }
+  #gate input { flex: 1; }
+  #gate-err { color: #8f2d2d; font-size: 13px; min-height: 1.2em; margin-top: 10px; }
+  .add { background: #fffdf8cc; border: 1px dashed var(--rule); padding: 16px; margin-bottom: 16px; }
+  .add h2 { font-family: Newsreader, serif; font-size: 18px; margin: 0 0 10px; }
+  .add form { display: grid; gap: 8px; }
+  .add textarea { min-height: 90px; resize: vertical; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .row > * { flex: 1; min-width: 120px; }
+</style>
+</head>
+<body>
+<div id="gate">
+  <div class="box">
+    <h1>Idea inbox<span>seeds, not posts.</span></h1>
+    <p>Private board. Type the password.</p>
+    <form id="gate-form">
+      <input type="password" id="gate-pw" autocomplete="current-password" placeholder="Password" autofocus>
+      <button class="btn" type="submit">Enter</button>
+    </form>
+    <div id="gate-err"></div>
+  </div>
+</div>
+<div id="app" hidden>
+<div class="wrap">
+  <header>
+    <h1>Idea inbox<span>seeds, not posts. reuse is the point.</span></h1>
+    <div class="stats" id="stats"></div>
+  </header>
+  <div class="toolbar">
+    <input type="search" id="q" placeholder="Search gist, raw, tags…">
+    <button class="chip on" data-lane="all">All</button>
+    <button class="chip" data-lane="X AI">X AI</button>
+    <button class="chip" data-lane="LinkedIn English">LinkedIn</button>
+    <button class="chip" data-lane="Hold">Hold</button>
+  </div>
+  <div class="layout">
+    <main>
+      <section class="add">
+        <h2>New seed</h2>
+        <form id="add-form">
+          <textarea id="add-raw" placeholder="Raw dump, any language, any mess." required></textarea>
+          <input type="text" id="add-gist" placeholder="Gist (optional)">
+          <div class="row">
+            <select id="add-lane">
+              <option value="Hold">Hold</option>
+              <option value="X AI">X AI</option>
+              <option value="LinkedIn English">LinkedIn English</option>
+            </select>
+            <input type="text" id="add-tags" placeholder="tags, comma separated">
+            <select id="add-lang">
+              <option value="en">en</option>
+              <option value="es">es</option>
+              <option value="mix">mix</option>
+            </select>
+          </div>
+          <button class="btn" type="submit">File on this device</button>
+        </form>
+        <p class="reuse">Saved in this browser. Sol still files the live copy when you dump in chat, so nothing depends on one laptop.</p>
+      </section>
+      <div id="list"></div>
+    </main>
+    <aside>
+      <h2>Tags</h2>
+      <p class="note">Same tag, later connection. An idea can ship more than once, to more than one room.</p>
+      <div class="cloud" id="cloud"></div>
+      <h2>Links</h2>
+      <p class="note">Shared tags, plus any explicit related ids.</p>
+      <div id="links"></div>
+    </aside>
+  </div>
+</div>
+</div>
+<script>
+const GATE_HASH = "0e069f32093717906d6b6aaa5b383857a4c544ac26c6919e5319813b47cc90db";
+const GATE_KEY = "sol_inbox_ok";
+
+async function sha256(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+const $ = (id) => document.getElementById(id);
+let DATA = { ideas: [], updated: null };
+let lane = "all";
+let query = "";
+let tagFilter = "";
+
+function fmt(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleString("en-GB", { timeZone: "Europe/Madrid", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+function laneClass(l) {
+  if (l === "X AI") return "x";
+  if (l === "LinkedIn English") return "li";
+  return "hold";
+}
+function cardClass(l) {
+  if (l === "X AI") return "lane-x";
+  if (l === "LinkedIn English") return "lane-li";
+  return "";
+}
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function localKey() { return "sol_inbox_local"; }
+function mergeLocal(remote) {
+  const extra = JSON.parse(localStorage.getItem(localKey()) || "[]");
+  const seen = new Set((remote.ideas || []).map(i => i.id));
+  const ideas = [...(remote.ideas || [])];
+  extra.forEach(i => { if (!seen.has(i.id)) ideas.push(i); });
+  return { ...remote, ideas };
+}
+function filtered() {
+  const q = query.trim().toLowerCase();
+  return DATA.ideas.filter(i => {
+    if (lane !== "all" && i.lane !== lane) return false;
+    if (tagFilter && !(i.tags || []).includes(tagFilter)) return false;
+    if (!q) return true;
+    const blob = [i.id, i.gist, i.raw, i.language, ...(i.tags||[])].join(" ").toLowerCase();
+    return blob.includes(q);
+  });
+}
+function renderStats() {
+  const n = DATA.ideas.length;
+  const uses = DATA.ideas.reduce((a,i) => a + (i.uses||[]).length, 0);
+  const posted = DATA.ideas.reduce((a,i) => a + (i.uses||[]).filter(u => u.status === "posted").length, 0);
+  $("stats").innerHTML = `<div><b>${n}</b>seeds</div><div><b>${uses}</b>sends</div><div><b>${posted}</b>live</div>`;
+}
+function renderList() {
+  const items = filtered();
+  if (!items.length) { $("list").innerHTML = `<p class="empty">Nothing in this cut.</p>`; return; }
+  $("list").innerHTML = items.map(i => `
+    <article class="card ${cardClass(i.lane)}">
+      <div class="meta">
+        <span class="id">${esc(i.id)}</span>
+        <span>dropped ${fmt(i.dropped)}</span>
+        <span class="lane ${laneClass(i.lane)}">${esc(i.lane)}</span>
+        <span>${esc(i.language)}</span>
+        <span>${(i.uses||[]).length} use${(i.uses||[]).length===1?"":"s"}</span>
+      </div>
+      <p class="gist">${esc(i.gist)}</p>
+      <div class="tags">${(i.tags||[]).map(t => `<button class="tag" data-tag="${esc(t)}">#${esc(t)}</button>`).join("")}</div>
+      <ul class="uses">
+        ${(i.uses||[]).map(u => `
+          <li>
+            <div class="when">${fmt(u.when)}</div>
+            <div>
+              <span class="status ${esc(u.status)}">${esc(u.status)}</span>
+              · ${esc(u.where)}
+              ${u.handedTo ? " · " + esc(u.handedTo) : ""}
+              ${u.note ? `<div>${esc(u.note)}</div>` : ""}
+            </div>
+          </li>`).join("") || `<li><div></div><div class="empty">No sends yet.</div></li>`}
+      </ul>
+      ${(i.related||[]).length ? `<div class="reuse">Related: ${i.related.map(esc).join(", ")}</div>` : ""}
+      <details class="raw"><summary>raw dump</summary><p>${esc(i.raw)}</p></details>
+      <div class="reuse">Reuse allowed. A send does not retire the seed.</div>
+    </article>
+  `).join("");
+}
+function renderCloud() {
+  const counts = {};
+  DATA.ideas.forEach(i => (i.tags||[]).forEach(t => counts[t] = (counts[t]||0)+1));
+  const tags = Object.entries(counts).sort((a,b) => b[1]-a[1] || a[0].localeCompare(b[0]));
+  $("cloud").innerHTML = tags.map(([t,c]) =>
+    `<button class="chip ${tagFilter===t?"on":""}" data-tag="${esc(t)}">#${esc(t)} ${c}</button>`
+  ).join("") || `<span class="empty">Tags appear as seeds land.</span>`;
+}
+function renderLinks() {
+  const ideas = DATA.ideas;
+  const pairs = [];
+  for (let a = 0; a < ideas.length; a++) {
+    for (let b = a+1; b < ideas.length; b++) {
+      const shared = (ideas[a].tags||[]).filter(t => (ideas[b].tags||[]).includes(t));
+      const explicit = (ideas[a].related||[]).includes(ideas[b].id) || (ideas[b].related||[]).includes(ideas[a].id);
+      if (shared.length || explicit) pairs.push({ a: ideas[a].id, b: ideas[b].id, shared, explicit });
+    }
+  }
+  if (!pairs.length) {
+    $("links").innerHTML = `<p class="empty">Need a second seed to draw a line. Tags are already waiting on ${ideas[0] ? ideas[0].id : "the first one"}.</p>`;
+    return;
+  }
+  $("links").innerHTML = pairs.map(p =>
+    `<div class="conn"><b>${p.a}</b> — <b>${p.b}</b><div>${p.explicit ? "linked · " : ""}${p.shared.map(t=>"#"+t).join(" ")}</div></div>`
+  ).join("");
+}
+function render() { renderStats(); renderList(); renderCloud(); renderLinks(); }
+
+function b64(s) {
+  return Uint8Array.from(atob(s), c => c.charCodeAt(0));
+}
+async function decryptIdeas(password, blob) {
+  const keyBytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
+  const key = await crypto.subtle.importKey("raw", keyBytes, "AES-GCM", false, ["decrypt"]);
+  const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64(blob.iv) }, key, b64(blob.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+async function boot(password) {
+  $("gate").hidden = true;
+  $("app").hidden = false;
+  try {
+    const res = await fetch("ideas.enc.json?t=" + Date.now(), { cache: "no-store" });
+    const blob = await res.json();
+    const remote = await decryptIdeas(password, blob);
+    DATA = mergeLocal(remote);
+  } catch (e) {
+    DATA = mergeLocal({ ideas: [] });
+  }
+  render();
+  $("q").addEventListener("input", e => { query = e.target.value; render(); });
+  document.querySelectorAll(".toolbar .chip").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".toolbar .chip").forEach(b => b.classList.remove("on"));
+      btn.classList.add("on");
+      lane = btn.dataset.lane;
+      render();
+    });
+  });
+  document.body.addEventListener("click", e => {
+    const t = e.target.closest("[data-tag]");
+    if (!t || t.closest(".toolbar")) return;
+    tagFilter = tagFilter === t.dataset.tag ? "" : t.dataset.tag;
+    render();
+  });
+  $("add-form").addEventListener("submit", e => {
+    e.preventDefault();
+    const raw = $("add-raw").value.trim();
+    if (!raw) return;
+    const n = DATA.ideas.length + 1;
+    const id = "S" + String(n).padStart(3, "0");
+    const idea = {
+      id,
+      dropped: new Date().toISOString(),
+      language: $("add-lang").value,
+      lane: $("add-lane").value,
+      gist: $("add-gist").value.trim() || raw.slice(0, 180),
+      raw,
+      tags: $("add-tags").value.split(",").map(s => s.trim().toLowerCase()).filter(Boolean),
+      related: [],
+      uses: []
+    };
+    const extra = JSON.parse(localStorage.getItem(localKey()) || "[]");
+    extra.push(idea);
+    localStorage.setItem(localKey(), JSON.stringify(extra));
+    DATA.ideas.push(idea);
+    $("add-form").reset();
+    render();
+  });
+}
+
+$("gate-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const pw = $("gate-pw").value;
+  const h = await sha256(pw);
+  if (h !== GATE_HASH) { $("gate-err").textContent = "Wrong password."; return; }
+  sessionStorage.setItem(GATE_KEY, pw);
+  boot(pw);
+});
+
+const saved = sessionStorage.getItem(GATE_KEY);
+if (saved) boot(saved);
+</script>
+</body>
+</html>
