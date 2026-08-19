@@ -1,2 +1,5 @@
-# idea-inbox
-Live idea inbox board — seeds, not posts. Reuse is the point.
+# Idea inbox
+
+Live board of raw seeds. Password on the published URL.
+
+A send does not retire a seed.
